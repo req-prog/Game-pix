@@ -219,8 +219,9 @@ document.querySelectorAll('button[data-a]').forEach(b=>tap(b,()=>act(b.dataset.a
 tap($('menuBtn'),()=>$('panel').classList.toggle('on'));
 // Сетевая комната через публичные MQTT-брокеры (WebSocket, без библиотек и без регистрации)
 function mqttRoom(){return new Promise(res=>{
- let code=decodeURIComponent(location.hash.slice(1));
- if(!code){const r=prompt('Код комнаты. Друг вводит такой же. Пусто — создать новую:','');if(r===null){res(null);return}code=r.trim()||Math.random().toString(36).slice(2,8);try{history.replaceState(null,'','#'+encodeURIComponent(code))}catch(e){}}
+ const nc=x=>String(x||'').normalize('NFKC').replace(/\s+/g,'').toLowerCase().slice(0,32);
+ let code='';try{code=nc(decodeURIComponent(location.hash.slice(1)))}catch(e){}
+ if(!code){const r=prompt('Код комнаты. Друг вводит такой же. Пусто — создать новую:','');if(r===null){res(null);return}code=nc(r)||Math.random().toString(36).slice(2,8);try{history.replaceState(null,'','#'+encodeURIComponent(code))}catch(e){}}
  const id=Math.random().toString(36).slice(2,10),base='seryichel1/'+code,E=new TextEncoder(),D=new TextDecoder(),
   urls=['wss://broker.emqx.io:8084/mqtt','wss://broker.hivemq.com:8884/mqtt','wss://test.mosquitto.org:8081','wss://mqtt.eclipseprojects.io:443/mqtt'];
  let peers={},ph=[],hs={},st={},fin=0,dead=0,sq=0,seen=new Set(),L=[];
@@ -246,7 +247,7 @@ function mqttRoom(){return new Promise(res=>{
   ws.onclose=()=>{clearTimeout(to);const k=L.indexOf(l);if(k>=0)L.splice(k,1);const was=l.ok;l.ok=0;if(was)netStatus();setTimeout(()=>{if(!dead)conn(u)},was?1500:8000)};
   ws.onerror=()=>{}}
  setInterval(()=>send(new Uint8Array([0xC0,0])),25000);
- setInterval(()=>{let ch=0;for(const k in peers)if(Date.now()-peers[k].t>4000){delete peers[k];ch=1}if(ch)fire()},1000);
+ setInterval(()=>{let ch=0;for(const k in peers)if(Date.now()-peers[k].t>8000){delete peers[k];ch=1}if(ch)fire()},1000);
  setTimeout(()=>{if(!fin){fin=1;dead=1;[...L].forEach(l=>{try{l.ws.close()}catch(e){}});res(null)}},10000);
  urls.forEach(conn)})}
 async function joinMP(){if(mpOn)return;mpOn=1;askName();$('st').textContent='Подключаюсь…';try{room=await claude.use('room')}catch(e){room=null}
